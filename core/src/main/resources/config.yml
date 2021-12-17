@@ -1,0 +1,7 @@
+server:
+  type: "ISLANDS"
+mongo:
+  address: "localhost:27017"
+  collectionName: "OneblockGame"
+  user: "root"
+  password: "4eTUzYMhBTt9t5Eg"

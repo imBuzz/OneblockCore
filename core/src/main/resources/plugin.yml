@@ -1,0 +1,16 @@
+name: OneblockCore
+main: me.buzz.coralmc.oneblockcore.OneblockCore
+version: 1.0-SNAPSHOT
+author: ImBuzz
+api-version: 1.17
+database: true
+
+depend:
+  - Dictation
+#  - SlimeWorldManager
+
+commands:
+  servers:
+    description: Show all Oneblock servers connected to Redis
+  saveme:
+    description: Show all Oneblock servers connected to Redis
