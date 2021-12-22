@@ -2,33 +2,37 @@ package me.buzz.coralmc.oneblockcore;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.grinderwolf.swm.api.SlimePlugin;
+import fr.minuskube.inv.InventoryManager;
 import it.ytnoos.dictation.api.Dictation;
 import it.ytnoos.dictation.api.bukkit.DictationBukkit;
 import lombok.Getter;
 import me.buzz.coralmc.oneblockcore.api.OneblockPlugin;
-import me.buzz.coralmc.oneblockcore.common.database.DataService;
-import me.buzz.coralmc.oneblockcore.common.files.FileService;
-import me.buzz.coralmc.oneblockcore.common.game.Game;
-import me.buzz.coralmc.oneblockcore.common.server.ServerInstance;
-import me.buzz.coralmc.oneblockcore.common.server.ServerType;
-import me.buzz.coralmc.oneblockcore.common.server.redis.RedisService;
-import me.buzz.coralmc.oneblockcore.common.server.redis.adapters.ItemPair;
-import me.buzz.coralmc.oneblockcore.common.server.redis.adapters.ItemPairAdapter;
-import me.buzz.coralmc.oneblockcore.common.server.redis.adapters.PotionEffectAdapter;
-import me.buzz.coralmc.oneblockcore.common.server.service.ServiceHandler;
-import me.buzz.coralmc.oneblockcore.common.utils.Executor;
+import me.buzz.coralmc.oneblockcore.commands.OneblockCommand;
+import me.buzz.coralmc.oneblockcore.database.DataService;
+import me.buzz.coralmc.oneblockcore.files.FileService;
+import me.buzz.coralmc.oneblockcore.game.Game;
+import me.buzz.coralmc.oneblockcore.server.ServerInstance;
+import me.buzz.coralmc.oneblockcore.server.redis.RedisService;
+import me.buzz.coralmc.oneblockcore.server.redis.adapters.ItemPair;
+import me.buzz.coralmc.oneblockcore.server.redis.adapters.ItemPairAdapter;
+import me.buzz.coralmc.oneblockcore.server.redis.adapters.LocationAdapter;
+import me.buzz.coralmc.oneblockcore.server.redis.adapters.PotionEffectAdapter;
+import me.buzz.coralmc.oneblockcore.server.service.ServiceHandler;
+import me.buzz.coralmc.oneblockcore.utils.Executor;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import org.bukkit.Location;
+import org.bukkit.command.CommandMap;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 
-public final class OneblockCore extends JavaPlugin implements OneblockPlugin, CommandExecutor {
+import java.lang.reflect.Field;
+
+public final class OneblockCore extends JavaPlugin implements OneblockPlugin {
 
     private static OneblockCore oneblockCore;
+
     public static OneblockCore get() {
         return oneblockCore;
     }
@@ -36,17 +40,25 @@ public final class OneblockCore extends JavaPlugin implements OneblockPlugin, Co
     public static Gson GSON = new GsonBuilder()
             .registerTypeAdapter(PotionEffect.class, new PotionEffectAdapter())
             .registerTypeAdapter(ItemPair.class, new ItemPairAdapter())
+            .registerTypeAdapter(Location.class, new LocationAdapter())
             .create();
 
-    @Getter private ServerInstance serverInstance;
-    @Getter private Dictation dictation;
-    @Getter private ServiceHandler serviceHandler;
-
-    @Getter private Game game;
+    @Getter
+    private ServerInstance serverInstance;
+    @Getter
+    private Dictation dictation;
+    @Getter
+    private ServiceHandler serviceHandler;
+    @Getter
+    private SlimePlugin slimePlugin;
+    @Getter
+    private InventoryManager inventoryManager;
+    @Getter
+    private Game game;
 
     @Override
     public void onEnable() {
-        if (!checkDependencies()){
+        if (!checkDependencies()) {
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
@@ -69,34 +81,22 @@ public final class OneblockCore extends JavaPlugin implements OneblockPlugin, Co
         game = serverInstance.getType().getGame().get();
         game.init();
 
+        inventoryManager = new InventoryManager(this);
+        inventoryManager.init();
+
         getCommand("servers").setExecutor(this);
         getCommand("saveme").setExecutor(this);
     }
 
     @Override
     public void onDisable() {
-        serviceHandler.stop();
+        game.stop();
+
         Executor.stopData();
         getLogger().info("Stopping executor...");
         Executor.stop();
-    }
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        RedisService redisService = ((RedisService) serviceHandler.getService(RedisService.class));
-
-        if (sender instanceof Player && command.getName().equalsIgnoreCase("saveme")){
-            Player player = (Player) sender;
-            redisService.publishPlayerData(player);
-        }
-
-        if (command.getName().equalsIgnoreCase("servers")){
-            redisService.lookingForServer(ServerType.ISLANDS).whenComplete((value, ex) -> {
-                getLogger().info("Found server: " + value);
-            });
-        }
-
-        return true;
+        serviceHandler.stop();
     }
 
     private boolean checkDependencies() {
@@ -108,9 +108,30 @@ public final class OneblockCore extends JavaPlugin implements OneblockPlugin, Co
         }
         return true;
     }
-    private void registerDependencies(){
+
+    private void registerDependencies() {
         RegisteredServiceProvider<DictationBukkit> provider = Bukkit.getServicesManager().getRegistration(DictationBukkit.class);
         dictation = provider.getProvider();
+        slimePlugin = (SlimePlugin) Bukkit.getPluginManager().getPlugin("SlimeWorldManager");
+    }
+
+    public final void addCommand(OneblockCommand... commands) {
+        CommandMap map = null;
+        Field field;
+
+        try {
+            field = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+            field.setAccessible(true);
+            map = (CommandMap) field.get(Bukkit.getServer());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        for (OneblockCommand command : commands) {
+            assert map != null;
+            if (map.getCommand(command.getName()) == null) {
+                map.register(command.getName(), command);
+            }
+        }
     }
 
 }
