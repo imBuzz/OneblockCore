@@ -6,12 +6,14 @@ import lombok.Getter;
 import me.buzz.coralmc.oneblockcore.OneblockCore;
 import me.buzz.coralmc.oneblockcore.database.queues.impl.LoadUserQueue;
 import me.buzz.coralmc.oneblockcore.database.queues.impl.PlayerDataQueue;
+import me.buzz.coralmc.oneblockcore.files.FileService;
+import me.buzz.coralmc.oneblockcore.files.impl.ConfigDatabase;
 import me.buzz.coralmc.oneblockcore.players.PlayerData;
 import me.buzz.coralmc.oneblockcore.players.User;
 import me.buzz.coralmc.oneblockcore.server.redis.RedisService;
 import me.buzz.coralmc.oneblockcore.server.redis.messages.ChatMessage;
 import me.buzz.coralmc.oneblockcore.structures.actions.OperationAction;
-import org.bukkit.ChatColor;
+import me.buzz.coralmc.oneblockcore.utils.Strings;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -78,18 +80,17 @@ public class PlayerJoinListener implements Listener {
                 .add(new OperationAction<>(event.getPlayer().getName(), OperationAction.OperationType.SAVING));
     }
 
-    //TODO: CONTROLLARE CHAT GLOBALE DIO CANE
-    //TODO: DA FARE LA IS CHAT GLOBALE
-
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void chatEvent(AsyncPlayerChatEvent event) {
+        event.setFormat(((FileService) core.getServiceHandler().getService(FileService.class)).getConfigDatabase().getString(ConfigDatabase.CHAT_FORMAT));
+
         Player player = event.getPlayer();
         User user = core.getGame().getUsers().get(event.getPlayer().getName());
 
-        String chatMessage = (player.getDisplayName() + ChatColor.GRAY + ": " + event.getMessage());
+        String chatMessage = Strings.translate(event.getFormat().replace("%1$s", player.getDisplayName())).replace("%2$s", event.getMessage());
 
         core.getDictation().getCommandManager()
-                .executeCommand(new ChatMessage(user.isTalkingInIsland(), core.getServerInstance().getServerID(), chatMessage));
+                .executeCommand(new ChatMessage(user.isTalkingInIsland(), (user.isTalkingInIsland() ? ISLAND_CHAT_PREFIX : "") + core.getServerInstance().getServerID(), chatMessage));
     }
 
 

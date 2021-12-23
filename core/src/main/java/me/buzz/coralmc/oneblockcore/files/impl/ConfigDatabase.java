@@ -7,7 +7,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class ConfigDatabase extends Config {
 
     public static String SERVER_TYPE = "server.type";
-
+    public static String CHAT_FORMAT = "chat.format";
     public static String DATABASE_ADDRESS = "mongo.address";
     public static String DATABASE_COLLECTION_NAME = "mongo.collectionName";
     public static String DATABASE_USER = "mongo.user";
@@ -24,6 +24,7 @@ public class ConfigDatabase extends Config {
         if (config.get(DATABASE_COLLECTION_NAME) == null) config.set(DATABASE_COLLECTION_NAME, "OneblockGame");
         if (config.get(DATABASE_USER) == null) config.set(DATABASE_USER, "root");
         if (config.get(DATABASE_PASSWORD) == null) config.set(DATABASE_PASSWORD, "insert");
+        if (config.get(CHAT_FORMAT) == null) config.set(CHAT_FORMAT, "%1$s: %2$s");
     }
 
 

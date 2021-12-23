@@ -5,3 +5,5 @@ mongo:
   collectionName: "OneblockGame"
   user: "root"
   password: "4eTUzYMhBTt9t5Eg"
+chat:
+  format: "%1$s: %2$s"

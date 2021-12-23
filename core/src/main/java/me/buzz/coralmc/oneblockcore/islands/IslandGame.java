@@ -1,5 +1,7 @@
 package me.buzz.coralmc.oneblockcore.islands;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.collect.Maps;
 import com.grinderwolf.swm.api.SlimePlugin;
 import com.grinderwolf.swm.api.exceptions.UnknownWorldException;
@@ -15,12 +17,14 @@ import me.buzz.coralmc.oneblockcore.utils.Executor;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 
-import java.lang.ref.WeakReference;
+import java.time.Duration;
 import java.util.Map;
 
 public class IslandGame extends Game {
     @Getter
-    private final Map<String, WeakReference<World>> islandWorld = Maps.newHashMap();
+    private final Map<String, World> islandWorld = Maps.newHashMap();
+    @Getter
+    private final Cache<String, String> requestedIslands = Caffeine.newBuilder().expireAfterWrite(Duration.ofMinutes(1)).build();
 
     @Override
     public void init() {
@@ -44,12 +48,11 @@ public class IslandGame extends Game {
         registerListener("island_global_listener", new GlobalIslandListener());
     }
 
-    public void loadNewIsland(String UUID) {
-        if (!Bukkit.isPrimaryThread()) Executor.sync(() -> loadNewIsland(UUID), 1L);
+    public void requestIsland(String UUID) {
+        if (!Bukkit.isPrimaryThread()) Executor.sync(() -> requestIsland(UUID), 1L);
         else {
             try {
                 SlimePlugin slimePlugin = core.getSlimePlugin();
-                core.getLogger().info("Primary Thread: " + Bukkit.isPrimaryThread());
 
                 SlimeWorld islandWorld;
                 try {

@@ -1,7 +1,5 @@
 package me.buzz.coralmc.oneblockcore.game;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import it.ytnoos.dictation.api.redis.DictationSubscriber;
@@ -11,8 +9,10 @@ import me.buzz.coralmc.oneblockcore.commands.impl.IslandBase;
 import me.buzz.coralmc.oneblockcore.global.PlayerJoinListener;
 import me.buzz.coralmc.oneblockcore.players.User;
 import me.buzz.coralmc.oneblockcore.server.redis.messages.ChatMessage;
+import me.buzz.coralmc.oneblockcore.server.redis.messages.IslandMessage;
 import me.buzz.coralmc.oneblockcore.server.redis.messages.ServerMessage;
 import me.buzz.coralmc.oneblockcore.server.redis.subscribers.ChatSubscriber;
+import me.buzz.coralmc.oneblockcore.server.redis.subscribers.IslandSubscriber;
 import me.buzz.coralmc.oneblockcore.server.redis.subscribers.ServerSubscriber;
 import me.buzz.coralmc.oneblockcore.structures.maps.ConcurrentStringMap;
 import me.buzz.coralmc.oneblockcore.utils.Executor;
@@ -21,7 +21,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import redis.clients.jedis.JedisPubSub;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -34,15 +33,15 @@ public abstract class Game {
     private final Map<String, Listener> listeners = Maps.newHashMap();
     private final List<DictationSubscriber> subscribers = Lists.newArrayList();
     @Getter
-    private final Cache<String, String> requestedIslands = Caffeine.newBuilder().expireAfterWrite(Duration.ofMinutes(1)).build();
-    @Getter
     private final WorkloadThread workloadThread = new WorkloadThread();
 
     public void init() {
         registerSubscriber(new ChatSubscriber(), ChatMessage.CHANNEL);
         registerSubscriber(new ServerSubscriber(), ServerMessage.CHANNEL);
-        core.addCommand(new IslandBase());
+        registerSubscriber(new IslandSubscriber(), IslandMessage.CHANNEL);
+
         registerGlobalListeners();
+        core.addCommand(new IslandBase());
 
         Executor.timer(workloadThread, 5L);
     }

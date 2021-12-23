@@ -16,18 +16,9 @@ public class ServerSubscriber extends JedisPubSub {
 
         if (serverMessage.getType() == ServerMessage.ServerMessageType.ISLAND_REQUEST) {
             if (core.getServerInstance().getType() != ServerType.ISLANDS) return;
-            ((IslandGame) core.getGame()).loadNewIsland(serverMessage.getContainer()[0]);
-            return;
-        }
-
-        if (serverMessage.getType() == ServerMessage.ServerMessageType.ISLAND_SUCCESS) {
-            String islandUUID = serverMessage.getContainer()[0];
-            core.getGame().getRequestedIslands().asMap().forEach((key, value) -> {
-                if (value.equalsIgnoreCase(islandUUID)) {
-                    core.getDictation().getPlayerManager().sendToServer(key, serverMessage.getSender());
-                    core.getGame().getRequestedIslands().invalidate(key);
-                }
-            });
+            IslandGame islandGame = ((IslandGame) core.getGame());
+            islandGame.getRequestedIslands().put(serverMessage.getContainer()[1], serverMessage.getContainer()[0]);
+            islandGame.requestIsland(serverMessage.getContainer()[0]);
         }
     }
 

@@ -43,8 +43,7 @@ public class ServerMessage implements RedisMessage {
 
     public enum ServerMessageType {
 
-        ISLAND_REQUEST,
-        ISLAND_SUCCESS
+        ISLAND_REQUEST
 
     }
 

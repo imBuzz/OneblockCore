@@ -29,10 +29,12 @@ public class Island {
     private transient final static int MAX_REDSTONE_VALUE = 1000;
     private final Map<IslandPositionType, WorldPosition> positions = Maps.newEnumMap(IslandPositionType.class);
     private final Map<UpgradeType, AbstractUpgrade> upgrades = Maps.newEnumMap(UpgradeType.class);
+
     @Getter
     private final Map<String, IslandPlayer> players = Maps.newHashMap();
     @Getter
     private final Map<String, BannedIslandPlayer> bannedPlayers = Maps.newHashMap();
+
     @Id
     @Getter
     private String uuid;

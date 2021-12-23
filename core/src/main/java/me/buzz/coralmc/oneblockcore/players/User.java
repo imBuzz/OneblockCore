@@ -15,6 +15,8 @@ public class User {
     private String nameID;
     @Setter
     private String islandUUID;
+    @Setter
+    private transient String inviteUUID;
     private transient boolean talkingInIsland = false;
 
     public User(String nameID) {

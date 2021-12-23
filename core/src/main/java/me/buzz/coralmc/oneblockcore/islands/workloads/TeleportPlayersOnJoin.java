@@ -33,7 +33,7 @@ public class TeleportPlayersOnJoin extends AbstractQueue<User> {
         }
 
         islandGame.getWorkloadThread().addLoad(() -> {
-            World world = islandGame.getIslandWorld().get(DataService.ISLAND_WORLD_TAG + user.getIslandUUID()).get();
+            World world = islandGame.getIslandWorld().get(DataService.ISLAND_WORLD_TAG + user.getIslandUUID());
             if (world == null) {
                 OneblockCore.get().getLogger().severe("Mondo: " + DataService.ISLAND_WORLD_TAG + user.getIslandUUID() + " nullo");
                 return;
